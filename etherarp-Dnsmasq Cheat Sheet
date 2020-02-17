@@ -1,0 +1,527 @@
+Dnsmasq Cheat Sheet
+Copy pasted from https://etherarp.net/dnsmasq/
+26 Jan 2019
+on dns, dhcp, sysadmin, networking
+
+    General settings
+        Include another configuration file
+        Include a directory of configuration files
+        Include a directory of configuration files excluding *.bak
+        Do not read /etc/hosts
+        Read an alternative host file
+        Set the resolve file
+        Disable the resolv file
+        Set the user dnsmasq is running as
+        Listen on the wildcard interface
+        Log every DHCP query
+        Log lots of extra information about DHCP transactions.
+    DNS options
+        Port for DNS service
+        Filter out queries that cannot be answered over public DNS
+        Set a custom forward nameserver
+        Set a custom reverse name server
+        Set a local only domain
+        Forcibly set a domain to resolve to an address
+        Add clients who attempt to query particular domains to an ipset
+        Use a specific interface for a particular nameserver
+        Set the fully qualified domain name
+        Append the FQDN to host file entries
+        Set the FQDN for a particular subnet
+        Set the FQDN for a particular range
+        Associate an interface with a hostname
+        Automatically generate hostnames for an IP range
+        Modify IPv4 addresses returned from upstream nameservers
+        Set a Host record
+        Set a TXT record
+        Set a SRV record
+        Set SSHFP (and other) records
+    DHCP options
+        Set the limit on DHCP leases, the default is 150
+        The DHCP server lease database lcoation
+        Set the DHCP server to authoritative mode.
+        Run an executable when a DHCP lease is created or destroyed.
+        Define a DHCP range
+        Define a DHCP range with a subnet mask (needed for dhcp relay)
+        Define a DHCP range with a tag
+        Specify a subnet for static leases only
+        Deny unknown clients
+        Process entries in /etc/ethers as dhcp-host statements
+        Specify a directory containing DHCP hosts
+    DHCP per-network options
+        Set the Default router / gateway
+        Don’t send any default route
+        Set the DNS server
+        Set the NTP time server addresse
+        Send DHCPv6 option.
+        Set client polling options
+        Set the NIS domain name
+        Set an option which will only be sent to the “red” network
+        Set the default time-to-live
+        Set the “all subnets are local”
+    DHCP per-host settings
+        Never offer DHCP service to matching host
+        Custom setting for group of MACs
+        Custom setting for host with particular name
+        Custom setting for host with particular id
+        Custom setting for host with other attributes
+        Give a fixed IPv6 address and name for host with DUID
+        Set tag options to particular hosts
+    TFTP/PXE/BOOT
+        Enable dnsmasq’s built-in TFTP server
+        Etherboot options
+        PXELinux boot
+        Etherboot gPXE boot
+        dhcp-boot with an external TFTP server:
+        Do real PXE
+    DHCPv6
+        Enable DHCPv6.
+        Enable DHCP and Router Advertisements for this subnet.
+        Enable Router Advertisements and stateless DHCP for this subnet.
+        Do stateless DHCP, SLAAC, and generate DNS names from DHCPv4 leases.
+        Do Router Advertisements
+        Do Router Advertisements and DNS
+        Do Router Advertisements with a 46 hour lifetime
+
+General settings
+Include another configuration file
+
+conf-file=/etc/dnsmasq.more.conf
+
+Include a directory of configuration files
+
+conf-dir=/etc/dnsmasq.d
+
+Include a directory of configuration files excluding *.bak
+
+conf-dir=/etc/dnsmasq.d,.bak
+
+Do not read /etc/hosts
+
+no-hosts
+
+Read an alternative host file
+
+addn-hosts=/etc/banner_add_hosts
+
+Set the resolve file
+
+resolv-file=/etc/dnsmasq/upstream.conf
+
+Disable the resolv file
+
+no-poll
+
+Set the user dnsmasq is running as
+
+user=nobody
+group=nogroup
+
+Listen on the wildcard interface
+
+bind-interfaces
+
+Log every DHCP query
+
+log-queries
+
+Log lots of extra information about DHCP transactions.
+
+log-dhcp
+
+DNS options
+Port for DNS service
+
+# Set port=0 to disable DNS
+port=53
+
+Filter out queries that cannot be answered over public DNS
+
+domain-needed
+bogus-priv
+
+Set a custom forward nameserver
+
+server=/internal.example.com/10.0.0.1
+
+Set a custom reverse name server
+
+rev-server=192.168.3.0/24,10.1.2.3
+# the old fashioned way 
+server=/3.168.192.in-addr.arpa/10.1.2.3
+
+Set a local only domain
+
+local=/rohan.lan/
+
+Forcibly set a domain to resolve to an address
+
+address=/foo.example.com/172.29.250.17
+
+Add clients who attempt to query particular domains to an ipset
+
+# This feature needs to be enabled at compile time
+ipset=/spynet2.microsoft.com/telemetry.microsoft.com/win10set
+
+Use a specific interface for a particular nameserver
+
+server=10.1.2.3@eth1
+
+Set the fully qualified domain name
+
+domain=rohan.lan
+
+Append the FQDN to host file entries
+
+expand-hosts
+
+Set the FQDN for a particular subnet
+
+domain=net1.rohan.lan,192.168.1.0/24
+
+Set the FQDN for a particular range
+
+domain=test.rohan.lan,192.168.1.248,192.168.1.254
+
+Associate an interface with a hostname
+
+interface-name=eth1,eth1-r1.rohan.lan
+
+Automatically generate hostnames for an IP range
+
+# Will generate 192-168-1-1.rohan.lan...
+synth-domain=rohan.lan,192.168.1.0/24
+# Will generate dhcp-192-168-1-100.rohan.lan...
+synth-domain=rohan.lan,192.168.1.100,192.168.1.200,dhcp-
+
+Modify IPv4 addresses returned from upstream nameservers
+
+# Rewrite a single address
+alias=104.24.100.85,192.168.1.254 
+# Rewrite a range of addresses
+alias=104.24.100.0-104.24.101.254,192.168.0.0,255.255.254.0
+
+Set a Host record
+
+host-record=host.rohan.lan,192.168.1.1
+
+Set a TXT record
+
+txt-record=text.rohan.lan,b81c9124323ae7e6
+
+Set a SRV record
+
+# If the domain is unqualified, uses the default domain 
+# these records are structured differently than BIND notation
+# to translate, this command can be used
+# printf "srv-host=_$service._$protocol.$domain,%s\n" \
+# $(dig _$service._$protocol.$domain srv +short|awk '{print $4","$3","$1","$2}')
+
+srv-host=_xmpp-client._tcp,192-168-1-52.rohan.lan,5222,5,0
+
+Set SSHFP (and other) records
+
+# Arbitrary records take the form of name,type,hex
+# We can generate a SSHFP record like this
+# printf "dns-rr=%s,44,01:01:%s\n" \
+# $host $(ssh-keyscan -D $host 2>/dev/null | awk '/1\ 1/{print $NF}')
+
+dns-rr=host.rohan.lan,44,01:01:7EDFDC5F1F82105854194A1312AD921D6196020E
+
+DHCP options
+Set the limit on DHCP leases, the default is 150
+
+dhcp-lease-max=150
+
+The DHCP server lease database lcoation
+
+dhcp-leasefile=/var/lib/dnsmasq/dnsmasq.leases
+
+Set the DHCP server to authoritative mode.
+
+# In this mode it will take over the lease for any client which broadcasts
+# see http://www.isc.org/files/auth.html
+dhcp-authoritative
+
+Run an executable when a DHCP lease is created or destroyed.
+
+# The arguments sent to the script are "add" or "del",
+# and the MAC/IP/NAME
+dhcp-script=/bin/echo
+
+Define a DHCP range
+
+# Supply the range of addresses available for lease (duration optional)
+# If you have more than one network, repeat for each
+dhcp-range=192.168.1.100,192.168.1.200,12h
+
+Define a DHCP range with a subnet mask (needed for dhcp relay)
+
+# If you don't know what a DHCP relay agent is
+# then you probably don't need to worry about this.
+dhcp-range=192.168.0.50,192.168.0.150,255.255.255.0,12h
+
+Define a DHCP range with a tag
+
+# Apply a tag to a s some DHCP options may be set only for this network.
+dhcp-range=set:red,192.168.0.50,192.168.0.150
+# Use this DHCP range only when the tag "green" is set.
+dhcp-range=tag:green,192.168.0.50,192.168.0.150,12h
+
+Specify a subnet for static leases only
+
+# Only available for hosts with matching --dhcp-host lines.
+# Note that dhcp-host declarations will be ignored unless there is a dhcp-range
+dhcp-range=192.168.0.0,static
+
+Deny unknown clients
+
+# Ignore any clients which are not specified in dhcp-host lines
+# or /etc/ethers. Equivalent to ISC "deny unknown-clients".
+# This relies on the special "known" tag which is set when a host is matched.
+dhcp-ignore=tag:!known
+
+Process entries in /etc/ethers as dhcp-host statements
+
+# Useful if you keep MAC-address/host mappings there for other purposes.
+read-ethers
+
+Specify a directory containing DHCP hosts
+
+# The files in this directory contain dhcp-host= entries
+# The "dhcp-host=" prefix is not needed in these files
+dhcp-hostsdir=/etc/dnsmasq.d/dhcp-host
+
+DHCP per-network options
+Set the Default router / gateway
+
+# These two commands are synonymous
+dhcp-option=option:router,1.2.3.4
+dhcp-option=3,1.2.3.4
+
+Don’t send any default route
+
+dhcp-option=3
+
+Set the DNS server
+
+dhcp-option=6,8.8.8.8
+
+Set the NTP time server addresse
+
+dhcp-option=option:ntp-server,192.168.0.4,10.10.0.5
+# Set the NTP time server address to machine running dnsmasq
+dhcp-option=42,0.0.0.0
+
+Send DHCPv6 option.
+
+# Note [] around IPv6 addresses.
+dhcp-option=option6:dns-server,[1234::77],[1234::88]
+# Send DHCPv6 option for namservers as the machine running dnsmasq and another.
+dhcp-option=option6:dns-server,[::],[1234::88]
+
+Set client polling options
+
+# Ask client to poll for option changes every six hours. (RFC4242)
+dhcp-option=option6:information-refresh-time,6h
+# Set option 58 client renewal time (T1).
+# Defaults to half of the lease time if not specified. (RFC2132)
+dhcp-option=option:T1:1m
+# Set option 59 rebinding time (T2).
+# Defaults to 7/8 of the lease time if not specified. (RFC2132)
+dhcp-option=option:T2:2m
+
+Set the NIS domain name
+
+dhcp-option=40,welly
+
+Set an option which will only be sent to the “red” network
+
+dhcp-option = tag:red, option:ntp-server, 192.168.1.1
+
+Set the default time-to-live
+
+dhcp-option=23,50
+
+Set the “all subnets are local”
+
+dhcp-option=27,1
+
+DHCP per-host settings
+Custom settings for host with particular MAC
+
+dhcp-host=11:22:33:44:55:66,fred,192.168.0.60,45m
+# Only set IP
+dhcp-host=11:22:33:44:55:66,192.168.0.60
+# Only set name
+dhcp-host=11:22:33:44:55:66,fred
+
+Never offer DHCP service to matching host
+
+dhcp-host=11:22:33:44:55:66,ignore
+# Ignore client-id if host has particular mac
+# This is useful to prevent PXE from causing issues
+dhcp-host=11:22:33:44:55:66,id:*
+
+Custom setting for group of MACs
+
+# Assign 192.168.0.60 to host with either mac
+# assume both macs are never in use at the same time
+# The second mac preempts the first
+dhcp-host=11:22:33:44:55:66,12:34:56:78:90:12,192.168.0.60
+
+Custom setting for host with particular name
+
+dhcp-host=bert,192.168.0.70,infinite
+
+Custom setting for host with particular id
+
+dhcp-host=id:01:02:02:04,192.168.0.60
+
+Custom setting for host with other attributes
+
+# Always give the host with client identifier "marjorie" the IP address 192.168.0.60
+dhcp-host=id:marjorie,192.168.0.60
+#
+# Enable the address given for "larry" in /etc/hosts
+# to be given to a machine presenting the name "larry" when it asks for a DHCP lease.
+dhcp-host=judge
+
+Give a fixed IPv6 address and name for host with DUID
+
+#Note the MAC addresses CANNOT be used to identify DHCPv6 clients.
+#Note also the they [] around the IPv6 address are obligatory.
+dhcp-host=id:00:01:00:01:16:d2:83:fc:92:d4:19:e2:d8:b2, fred, [1234::5]
+
+Set tag options to particular hosts
+
+# Apply tag options to hosts with matching mac
+dhcp-host=11:22:33:44:55:66,set:red
+dhcp-host=11:22:33:*:*:*,set:red
+#
+# Send extra options which are tagged as "red" to any machine whose
+# DHCP vendorclass string includes the substring "Linux"
+dhcp-vendorclass=set:red,Linux
+#
+# Send extra options which are tagged as "red" to any machine one
+# of whose DHCP userclass strings includes the substring "accounts"
+dhcp-userclass=set:red,accounts
+#
+# Send extra options which are tagged as "red" to any machine whose
+# MAC address matches the pattern.
+dhcp-mac=set:red,00:60:8C:*:*:*
+
+TFTP/PXE/BOOT
+Enable dnsmasq’s built-in TFTP server
+
+# Set the root directory for files available via FTP.
+enable-tftp
+tftp-root=/var/ftpd
+# Do not abort if the tftp-root is unavailable
+tftp-no-fail
+# Only allow files owned by the dnsmasq user to be sent
+tftp-secure
+# Stops dnsmasq from negotiating a larger blocksize for TFTP
+tftp-no-blocksize
+# Set the boot file name only when the "red" tag is set.
+dhcp-boot=tag:red,pxelinux.red-net
+
+Etherboot options
+
+# Send the etherboot magic flag and then etherboot options (a string).
+dhcp-option=128,e4:45:74:68:00:00
+dhcp-option=129,NIC=eepro100
+# Send the Encapsulated-vendor-class ID needed by some configurations of
+# Etherboot to allow is to recognise the DHCP server.
+dhcp-option=vendor:Etherboot,60,"Etherboot"
+
+PXELinux boot
+
+dhcp-option-force=208,f1:00:74:7e 		# Magic number
+dhcp-option-force=209,configs/common 		# Config file
+dhcp-option-force=210,/tftpboot/pxelinux/files/ # Path prefix
+dhcp-option-force=211,30i			# Reboot time.
+# Set the boot filename for netboot/PXE.
+dhcp-boot=pxelinux.0
+# Idf the bootserver is external
+dhcp-boot=pxelinux,server.name,192.168.1.100
+
+Etherboot gPXE boot
+
+# The idea is to send two different
+# filenames, the first loads gPXE, and the second tells gPXE what to
+# load. The dhcp-match sets the gpxe tag for requests from gPXE.
+dhcp-match=set:gpxe,175 # gPXE sends a 175 option.
+dhcp-boot=tag:!gpxe,undionly.kpxe
+dhcp-boot=mybootimage
+# Encapsulated options for Etherboot gPXE.
+dhcp-option=encap:175, 1, 5b         # priority code
+dhcp-option=encap:175, 176, 1b       # no-proxydhcp
+dhcp-option=encap:175, 177, string   # bus-id
+dhcp-option=encap:175, 189, 1b       # BIOS drive code
+dhcp-option=encap:175, 190, user     # iSCSI username
+dhcp-option=encap:175, 191, pass     # iSCSI password
+# Test for the architecture of a netboot client.
+# PXE clients should send their arch as opt 93 (See RFC 4578)
+dhcp-match=peecees, option:client-arch, 0 #x86-32
+dhcp-match=itanics, option:client-arch, 2 #IA64
+dhcp-match=hammers, option:client-arch, 6 #x86-64
+dhcp-match=mactels, option:client-arch, 7 #EFI x86-64
+
+dhcp-boot with an external TFTP server:
+
+# the name and IP address of the server are given after the filename.
+# Can fail with old PXE ROMS. Overridden by --pxe-service.
+  dhcp-boot=/var/ftpd/pxelinux.0,boothost,192.168.0.3
+# load balance the tftp load among a set of servers.
+  dhcp-boot=/var/ftpd/pxelinux.0,boothost,tftp_server_nAame
+
+Do real PXE
+
+pxe-prompt="What system shall I netboot?"
+pxe-prompt="Press F8 for menu.", 60
+pxe-service=x86PC, "Boot from local disk"
+# Loads <tftp-root>/pxelinux.0 from dnsmasq TFTP server.
+pxe-service=x86PC, "Install Linux", pxelinux
+# Loads <tftp-root>/pxelinux.0 from TFTP server at 192.168.1.2
+pxe-service=x86PC, "Install Linux from tftp", pxelinux, 1.2.3.4
+# use bootserver at 192.168.1.3
+pxe-service=x86PC, "Install windows from RIS server", 1, 1.2.3.4
+
+DHCPv6
+Enable DHCPv6.
+
+# Note that the prefix-length does not need to be specifiedand defaults to 64 if missing/
+dhcp-range=1234::2, 1234::500, 64, 12h
+
+Enable DHCP and Router Advertisements for this subnet.
+
+# Set the A bit in the RA so that clients can use SLAAC addresses as well as DHCP ones.
+dhcp-range=1234::2, 1234::500, slaac
+
+Enable Router Advertisements and stateless DHCP for this subnet.
+
+# Clients will not get addresses from DHCP but get other configuration information.
+# They will use SLAAC for addresses.
+dhcp-range=1234::, ra-stateless
+
+Do stateless DHCP, SLAAC, and generate DNS names from DHCPv4 leases.
+
+dhcp-range=1234::, ra-stateless, ra-names
+
+Do Router Advertisements
+
+dhcp-range=1234::, ra-only
+
+Do Router Advertisements and DNS
+
+# add DNS record for the IPv6 address of SLAAC dual-stack hosts
+# Use the DHCPv4 lease to derive the name, network segment and MAC
+dhcp-range=1234::, ra-names
+
+Do Router Advertisements with a 46 hour lifetime
+
+# Note: minimum lifetime is 2 hours.)
+dhcp-range=1234::, ra-only, 48h
+enable-ra
+
+Etherarp © 2016-2019 •
